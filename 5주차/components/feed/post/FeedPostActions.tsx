@@ -1,6 +1,13 @@
 import { TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
+import Animated, {
+    useAnimatedStyle,
+    useSharedValue,
+    withSequence,
+    withSpring,
+    withTiming,
+} from 'react-native-reanimated';
 import { ThemedText } from '@components/themed-text';
 import { FeedColors, Spacing } from '@/constants/theme';
 import { ThemedView } from '@components/themed-view';
@@ -25,11 +32,22 @@ function FeedPostActions({
     const likeCount = post?.likes ?? initialLikes;
 
     // TODO: heartScale 선언 (실습 1-1)
+    const heartScale = useSharedValue(1);
 
     // TODO: heartAnimatedStyle 정의 (실습 1-2)
+    const heartAnimatedStyle = useAnimatedStyle(() => ({
+        transform: [{ scale: heartScale.value }],
+    }));
 
     const handleLike = () => {
         // TODO: 하트 애니메이션 실행 (실습 1-3)
+        const willLike = !liked;
+        if (willLike) {
+            heartScale.value = withSequence(
+                withSpring(1.2, { damping: 8, mass: 0.8 }),
+                withSpring(1, { damping: 8, mass: 0.8 }),
+            );
+        }
         toggleLike(postId);
     };
 
@@ -42,16 +60,17 @@ function FeedPostActions({
                     onPress={handleLike}
                     style={[styles.actionButton, styles.row]}
                 >
-                    {/* TODO: Animated.View + heartAnimatedStyle (실습 1-4) */}
-                    <Ionicons
-                        name={liked ? 'heart' : 'heart-outline'}
-                        size={26}
-                        color={
-                            liked
-                                ? FeedColors.likeActive
-                                : FeedColors.primaryText
-                        }
-                    />
+                    <Animated.View style={heartAnimatedStyle}>
+                        <Ionicons
+                            name={liked ? 'heart' : 'heart-outline'}
+                            size={26}
+                            color={
+                                liked
+                                    ? FeedColors.likeActive
+                                    : FeedColors.primaryText
+                            }
+                        />
+                    </Animated.View>
                     <ThemedText style={styles.countText}>
                         {likeCount.toLocaleString()}
                     </ThemedText>
